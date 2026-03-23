@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+  
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // สร้าง Controller เพื่อดึงค่าจากช่องใส่ข้อมูล (Optional สำหรับตอนนี้)
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  
+  bool _isLoginFailed = false;
 
   @override
   void dispose() {
@@ -102,7 +104,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 60), // ระยะห่างก่อนถึงช่องใส่ข้อมูล
+                const SizedBox(height: 20),
+
+                // ข้อความแจ้งเตือนสีแดง
+                if (_isLoginFailed)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 15),
+                    child: Text(
+                      'เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
 
                 // 4. ช่องใส่ "ชื่อผู้ใช้"
                 _buildTextField(
@@ -144,6 +160,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       // จัดการ logic การเข้าสู่ระบบตรงนี้
+                      setState(() {
+                      // สมมติว่าถ้าข้อมูลว่าง ให้แสดงตัวหนังสือสีแดง
+                      if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
+                        _isLoginFailed = true;
+                      } else {
+                        _isLoginFailed = false;
+                        // ไปหน้าถัดไป...
+                        Navigator.pushReplacementNamed(context, '/home');
+                      }
+                    });        
                       print('Username: ${_usernameController.text}');
                       print('Password: ${_passwordController.text}');
                     },
@@ -170,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // 7. ลิงก์ "ลงทะเบียน"
                 TextButton(
-                  onPressed: () {
+                  onPressed: () {      
                     // ไปหน้าลงทะเบียน
                   },
                   child: const Text(
