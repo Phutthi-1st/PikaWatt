@@ -12,9 +12,9 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // ตั้งเวลา 3 วินาทีแล้วไปหน้า Home
+    // ตั้งเวลา 3 วินาทีแล้วไปหน้า Login
     Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/login');
     });
   }
 
