@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
-// import 'screens/home_screen.dart'; // import หน้าอื่นๆ ที่คุณจะสร้าง
+import 'screens/login_screen.dart';
 
 void main() {
   runApp(const PikaWattApp());
@@ -19,8 +19,7 @@ class PikaWattApp extends StatelessWidget {
       // รวม Path ทั้งหมดในแอปไว้ที่นี่
       routes: {
         '/': (context) => const SplashScreen(),
-        '/home': (context) => const Scaffold(body: Center(child: Text("Home Page"))), 
-        // '/login': (context) => const LoginScreen(),
+        '/login': (context) => const LoginScreen(),
       },
     );
   }
