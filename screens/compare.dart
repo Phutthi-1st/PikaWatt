@@ -39,7 +39,7 @@ class _CompareScreenState extends State<CompareScreen> {
     double savingPercent = costA > 0 ? (costDifference / costA) * 100 : 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFD147), // สีเหลืองหลัก
+      backgroundColor: const Color(0xFFF6D36A), // สีเหลืองหลัก
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
@@ -109,7 +109,7 @@ class _CompareScreenState extends State<CompareScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFFFD147) : Colors.transparent,
+                  color: isSelected ? const Color(0xFFF6D36A) : Colors.transparent,
                   borderRadius: BorderRadius.circular(30),
                 ),
                 alignment: Alignment.center,
@@ -248,12 +248,12 @@ class _CompareScreenState extends State<CompareScreen> {
         height: 75,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(35),
-          gradient: const LinearGradient(colors: [Color(0xFFFFD147), Color(0xFFF7941D)]),
+          color: const Color(0xFFFFCC33),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))],
         ),
         alignment: Alignment.center,
         child: const Text('เลือกรุ่น B เพื่อเปรียบเทียบ', 
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black)),
+          style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold)),
       ),
     );
   }
