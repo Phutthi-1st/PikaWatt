@@ -1,50 +1,76 @@
 import 'package:flutter/material.dart';
-import 'models/calculation_history.dart'; // import model ที่เราสร้างไว้
+import 'models/calculation_history.dart';
+import 'category_screen.dart';
+import 'history_screen.dart';
+import 'dart:math';
 
-class HomeDashboardScreen extends StatelessWidget {
+class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
 
   @override
+  State<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
+}
+
+// ส่วนของ State (จัดการข้อมูลและการสุ่ม Tips)
+class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
+  bool isExpanded = false;
+  int _currentIndex = 0; // เก็บสถานะหน้าปัจจุบัน
+
+  final CalculationHistory latestHistory = CalculationHistory(
+    id: '1',
+    title: 'เครื่องปรับอากาศ LG 12000 BTU',
+    usageHours: 8.0,
+    costPerMonth: '1,234',
+    costPerYear: '111,234',
+    date: DateTime.now()
+  );
+
+  final List<String> _energyTips = [
+    'การล้างแอร์ทุก 6 เดือน ช่วยลดค่าไฟได้ 5-10%',
+    'ปิดไฟดวงที่ไม่ใช้งาน ช่วยประหยัดค่าไฟและถนอมหลอดไฟ',
+    'ถอดปลั๊กเครื่องใช้ไฟฟ้าเมื่อไม่ใช้งาน ป้องกันไฟรั่วไหล',
+    'เลือกใช้หลอดไฟ LED แทนหลอดไส้ ประหยัดไฟได้มากกว่า 80%',
+    'ตั้งอุณหภูมิแอร์ที่ 25-26 องศา เป็นช่วงที่ประหยัดพลังงานที่สุด',
+    'เปิดหน้าต่างรับลมธรรมชาติแทนการเปิดแอร์ในวันที่อากาศดี',
+    'ไม่ควรนำของร้อนเข้าตู้เย็น เพราะจะทำให้คอมเพรสเซอร์ทำงานหนัก',
+  ];
+
+  @override
   Widget build(BuildContext context) {
-    // --- Mock Data: ข้อมูลสมมติสำหรับทำ Front-end (รอเปลี่ยนเป็นข้อมูลจาก Back-end ทีหลัง) ---
-    final List<CalculationHistory> historyList = [
-      CalculationHistory(
-        id: '1',
-        title: 'เครื่องปรับอากาศ LG 12000 BTU',
-        usageHours: 8.0,
-        costPerMonth: '1,234',
-        costPerYear: '111,234',
-      ),
-      CalculationHistory(
-        id: '2',
-        title: 'ตู้เย็น 2 ประตู 14 คิว',
-        usageHours: 24.0,
-        costPerMonth: '450',
-        costPerYear: '5,400',
-      ),
+    // 1. สร้าง List ของหน้าจอ โดยแยก UI ของหน้า Dashboard ออกมา
+    final List<Widget> _pages = [
+      _buildMainDashboard(), // หน้าที่ 0: Dashboard
+      const HistoryScreen(),   // หน้าที่ 1: History
+      const Center(child: Text('Settings Page')), // หน้าที่ 2: Settings (ชั่วคราว)
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6D36A),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header: Logo & Name
-            _buildHeader(),
-            
-            const SizedBox(height: 16),
+      backgroundColor: const Color(0xFFFFE082),
+      // 2. ปรับ Body ให้แสดงตาม Index ที่ถูกเลือก
+      body: _pages[_currentIndex], 
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
 
-            // Main Content Area
-            Expanded(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF3F3F3),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
-                  ),
+  // --- แยกส่วน UI ของ Dashboard เดิมออกมาเป็น Widget ---
+  Widget _buildMainDashboard() {
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        children: [
+          _buildHeader(), // ส่วนหัวที่มีโลโก้
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF2F2F2),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(40),
+                  topRight: Radius.circular(40),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 25.0),
+              child: SingleChildScrollView(
                 child: Column(
                   children: [
                     const SizedBox(height: 30),
@@ -52,168 +78,253 @@ class HomeDashboardScreen extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         'พลังงานที่คำนวณ ล่าสุด',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
                     ),
-                    const SizedBox(height: 10),
-
-                    // --- ส่วนกระดานประวัติ (Dynamic ListView) ---
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: historyList.length,
-                        itemBuilder: (context, index) {
-                          return _buildCalculationCard(historyList[index]);
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 15),
+                    _buildHistoryCard(),
+                    const SizedBox(height: 30),
                     _buildStartButton(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 40),
                     _buildEnergyTip(),
                     const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
-
-  // --- Widget Components ---
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset('pictures/PikaWatt_Logo.png', height: 50),
-          const SizedBox(width: 10),
-          const Text(
-            'PikaWatt',
-            style: TextStyle(color: Colors.black, fontSize: 26, fontWeight: FontWeight.bold),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCalculationCard(CalculationHistory history) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.calendar_today_rounded, color: Colors.blue, size: 30),
-                const SizedBox(width: 15),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(history.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text('ใช้งานวันละ ${history.usageHours} ชม.', style: const TextStyle(color: Colors.grey)),
-                  ],
-                )
-              ],
-            ),
-            const Divider(height: 25),
-            _rowInfo(Icons.monetization_on_outlined, 'ค่าไฟต่อเดือน:', history.costPerMonth),
-            const SizedBox(height: 8),
-            _rowInfo(Icons.bar_chart, 'ค่าไฟต่อปี:', history.costPerYear),
-            const SizedBox(height: 15),
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFEDBF),
-                foregroundColor: Colors.brown,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  // --- Widget ส่วนหัว (Header) ---
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      height: 160,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFF6D36A), Color(0xFFFFE082)],
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'pictures/PikaWatt_Logo.png',
+                height: 50,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.flash_on, size: 50, color: Colors.orange),
               ),
-              child: const Text('ดูรายละเอียด', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(width: 12),
+              const Text(
+                'PikaWatt',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Widget การ์ดประวัติ ---
+  Widget _buildHistoryCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10)),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.calendar_month_outlined, color: Colors.lightBlue, size: 35),
+              const SizedBox(width: 15),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(latestHistory.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  Text('ใช้งานวันละ ${latestHistory.usageHours} ชม.', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                ],
+              ),
+            ],
+          ),
+          const Divider(height: 30, thickness: 1),
+          _rowInfo(Icons.monetization_on_outlined, 'ค่าไฟต่อเดือน:', latestHistory.costPerMonth),
+          const SizedBox(height: 10),
+          _rowInfo(Icons.bar_chart, 'ค่าไฟต่อปี:', latestHistory.costPerYear),
+          if (isExpanded) ...[
+            const SizedBox(height: 15),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: const Color(0xFFFFF9E7), borderRadius: BorderRadius.circular(15)),
+              child: Column(
+                children: [
+                  _rowDetail('ใช้ไฟต่อชั่วโมง:', '1.25 ยูนิต'),
+                  _rowDetail('ใช้ไฟต่อวัน:', '10.00 ยูนิต'),
+                ],
+              ),
             )
           ],
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => setState(() => isExpanded = !isExpanded),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFEF3D7),
+                foregroundColor: Colors.brown,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                elevation: 0,
+              ),
+              child: Text(isExpanded ? 'ปิดรายละเอียด' : 'ดูรายละเอียด', style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Widget ปุ่มเริ่มคำนวณ ---
+  Widget _buildStartButton() {
+    return Container(
+      width: double.infinity,
+      height: 75,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(40),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))],
+      ),
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ApplianceCategoryScreen()),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFFFCC33),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+          elevation: 0,
         ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.bolt, color: Colors.orange, size: 35),
+            SizedBox(width: 10),
+            Text('เริ่มคำนวณค่าไฟ', style: TextStyle(color: Color(0xFF333333), fontSize: 24, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- Widget แถบเมนูด้านล่าง ---
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.white,
+          selectedItemColor: Colors.orange,
+          unselectedItemColor: Colors.black54,
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index; // เปลี่ยนหน้าเมื่อกดปุ่ม
+            });
+          },
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'หน้าหลัก'),
+            BottomNavigationBarItem(icon: Icon(Icons.history), label: 'ประวัติ'),
+            BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'ตั้งค่า'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ส่วนประกอบ UI เล็กๆ อื่นๆ
+  Widget _buildEnergyTip() {
+    // ใช้ Random เพื่อสุ่มลำดับใน List
+    final randomTip = _energyTips[Random().nextInt(_energyTips.length)];
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8FCD9),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // ใส่แอนิเมชั่นเบาๆ หรือ Icon สีสดใส
+          const Icon(Icons.lightbulb_outline, color: Colors.orange, size: 32),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Quick Energy Tip',
+                  style: TextStyle(
+                    fontSize: 14, 
+                    fontWeight: FontWeight.bold, 
+                    color: Colors.green
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  randomTip, // แสดงข้อความที่สุ่มมา
+                  style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _rowInfo(IconData icon, String label, String value) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Icon(icon, color: Colors.green, size: 20),
-            const SizedBox(width: 8),
-            Text(label, style: const TextStyle(color: Colors.black54)),
-          ],
-        ),
-        Text('$value บาท', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Icon(icon, color: Colors.green, size: 20),
+        const SizedBox(width: 10),
+        Text(label),
+        const Spacer(),
+        Text('$value บาท', style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
     );
   }
 
-  Widget _buildStartButton() {
-    return Container(
-      width: double.infinity,
-      height: 65,
-      decoration: BoxDecoration(
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))],
-      ),
-      child: ElevatedButton(
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFFFCC33),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.bolt, color: Colors.black, size: 30),
-            SizedBox(width: 10),
-            Text('เริ่มคำนวณค่าไฟ', style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEnergyTip() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFDFFFD6),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.lightbulb, color: Colors.orange),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              'Quick Energy Tip\nการล้างแอร์ทุก 6 เดือน ช่วยลดค่าไฟได้ 5-10%',
-              style: TextStyle(fontSize: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      selectedItemColor: Colors.orange,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'หน้าหลัก'),
-        BottomNavigationBarItem(icon: Icon(Icons.history), label: 'ประวัติ'),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'ตั้งค่า'),
+  Widget _rowDetail(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
       ],
     );
   }
