@@ -4,6 +4,7 @@ class CalculationHistory {
   final double usageHours;
   final String costPerMonth;
   final String costPerYear;
+  final DateTime date;
 
   CalculationHistory({
     required this.id,
@@ -11,5 +12,6 @@ class CalculationHistory {
     required this.usageHours,
     required this.costPerMonth,
     required this.costPerYear,
+    required this.date,
   });
 }
