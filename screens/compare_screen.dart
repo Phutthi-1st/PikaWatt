@@ -10,36 +10,46 @@ class CompareScreen extends StatefulWidget {
 class _CompareScreenState extends State<CompareScreen> {
   // สถานะสำหรับปุ่มสลับช่วงเวลา (วัน/เดือน/ปี)
   String _selectedPeriod = 'วัน';
-  int _currentNavIndex = 0; // สำหรับจัดการ BottomNav
-
+  
 @override
 Widget build(BuildContext context) {
   final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
 
-  // 1. ดึงข้อมูลสินค้า A และ B
   final Map<String, dynamic>? productA = args?['productA'];
   final Map<String, dynamic>? productB = args?['productB'];
 
-  // 2. ดึงค่ากลาง (Hours และ Rate) ที่ส่งมาจากหน้า Usage/ModelSelection
-  // แก้ตรงนี้: ให้ดึงจาก args โดยตรง (เพราะเราส่งแยกมาคู่กับ productA/B)
-  final double hours = double.tryParse(args?['hours']?.toString() ?? '0') ?? 0.0;
-  final double rate = double.tryParse(args?['rate']?.toString() ?? '4.42') ?? 4.42;
+  // ดึงค่ากลาง (รองรับทั้งการส่งแบบ Flat และส่งใน Map ของ product)
+  final double hours = double.tryParse((productA?['hours'] ?? args?['hours'] ?? '0').toString()) ?? 0.0;
+  final double rate = double.tryParse((productA?['rate'] ?? args?['rate'] ?? '4.42').toString()) ?? 4.42;
+  
+  // 1. ดึงจำนวนวันที่เลือกต่อสัปดาห์ (ถ้าไม่มีให้ Default เป็น 7)
+  final int daysPerWeek = int.tryParse((productA?['daysPerWeek'] ?? args?['daysPerWeek'] ?? '7').toString()) ?? 7;
 
-  // 3. ดึงค่า Watt ของแต่ละรุ่น
   final double wattA = double.tryParse(productA?['watt']?.toString() ?? '0') ?? 0.0;
   final double wattB = double.tryParse(productB?['watt']?.toString() ?? '0') ?? 0.0;
 
-  // --- Logic การคำนวณ (คงเดิมไว้ได้เลย) ---
-  double multiplier = 1.0;
-  if (_selectedPeriod == 'เดือน') multiplier = 30.0;
-  if (_selectedPeriod == 'ปี') multiplier = 365.0;
+  // --- 2. ปรับ Logic การคำนวณใหม่ให้สัมพันธ์กับจำนวนวัน ---
+  double costA = 0;
+  double costB = 0;
+  double dailyA = (wattA / 1000) * hours * rate;
+  double dailyB = (wattB / 1000) * hours * rate;
 
-  double costA = ((wattA / 1000) * hours * rate) * multiplier;
-  double costB = ((wattB / 1000) * hours * rate) * multiplier;
+  if (_selectedPeriod == 'วัน') {
+    costA = dailyA;
+    costB = dailyB;
+  } else if (_selectedPeriod == 'เดือน') {
+    // คำนวณรายเดือน: (ค่าไฟต่อวัน * จำนวนวันต่อสัปดาห์) * 4 สัปดาห์
+    costA = dailyA * daysPerWeek * 4;
+    costB = dailyB * daysPerWeek * 4;
+  } else if (_selectedPeriod == 'ปี') {
+    // คำนวณรายปี: (ค่าไฟต่อวัน * จำนวนวันต่อสัปดาห์) * 52 สัปดาห์
+    costA = dailyA * daysPerWeek * 52;
+    costB = dailyB * daysPerWeek * 52;
+  }
 
-    // คำนวณส่วนต่างและเปอร์เซ็นต์
-    double costDifference = costA - costB;
-    double savingPercent = costA > 0 ? (costDifference / costA) * 100 : 0;
+  // คำนวณส่วนต่าง (เหมือนเดิม)
+  double costDifference = costA - costB;
+  double savingPercent = costA > 0 ? (costDifference / costA) * 100 : 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6D36A), // สีเหลืองหลัก
@@ -87,12 +97,11 @@ Widget build(BuildContext context) {
                 : _buildSaveComparisonButton(context, productA, productB, costA, costB), // ส่งเพิ่ม 4 ตัวนี้
 
               const SizedBox(height: 15),
-              _buildFooterInfo(hours, rate),
+              _buildFooterInfo(hours, rate, daysPerWeek),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(), // แก้ไขให้เหมือนหน้าอื่น
     );
   }
 
@@ -365,51 +374,15 @@ Widget _buildSaveComparisonButton(
   );
 }
 
-  Widget _buildFooterInfo(double h, double r) {
-    return Column(
-      children: [
-        Text('อ้างอิงการใช้งาน: ${h.toStringAsFixed(0)} ชม./วัน', style: const TextStyle(color: Colors.grey)),
-        Text('ค่าไฟเฉลี่ย $r บาท/หน่วย', style: const TextStyle(color: Colors.grey)),
-      ],
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
+  Widget _buildFooterInfo(double h, double r, int days) { // เพิ่มรับค่า days
+  return Column(
+    children: [
+      Text(
+        'อ้างอิงการใช้งาน: ${h.toStringAsFixed(0)} ชม./วัน ($days วัน/สัปดาห์)', 
+        style: const TextStyle(color: Colors.grey)
       ),
-      child: Container(
-        color: const Color(0xFFF7F4EB), 
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
-            child: BottomNavigationBar(
-              currentIndex: _currentNavIndex,
-              backgroundColor: Colors.white,
-              selectedItemColor: Colors.black,
-              unselectedItemColor: Colors.black54,
-              type: BottomNavigationBarType.fixed,
-              onTap: (index) {
-                setState(() => _currentNavIndex = index);
-                if (index == 0) Navigator.pushNamedAndRemoveUntil(context, '/home', (r) => false);
-                if (index == 2) Navigator.pushNamed(context, '/settings');
-              },
-              items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'หน้าหลัก'),
-                BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), label: 'ประวัติ'),
-                BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'ตั้งค่า'),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+      Text('ค่าไฟเฉลี่ย $r บาท/หน่วย', style: const TextStyle(color: Colors.grey)),
+    ],
+  );
+}
 }

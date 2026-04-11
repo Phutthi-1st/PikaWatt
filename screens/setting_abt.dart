@@ -6,7 +6,7 @@ class AboutAppScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFD147), // สีเหลืองหลัก
+      backgroundColor: const Color(0xFFFFE082), // สีเหลืองหลัก
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
@@ -19,12 +19,11 @@ class AboutAppScreen extends StatelessWidget {
       ),
       body: Container(
         width: double.infinity,
-        margin: const EdgeInsets.only(top: 20),
+        margin: const EdgeInsets.only(top: 20, bottom: 20),
         decoration: const BoxDecoration(
           color: Color(0xFFF7F4EB), // สีครีมอ่อน
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(40),
-            topRight: Radius.circular(40),
+          borderRadius: BorderRadius.all(
+            Radius.circular(40),
           ),
         ),
         child: SingleChildScrollView(
@@ -64,7 +63,6 @@ class AboutAppScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -82,16 +80,5 @@ class AboutAppScreen extends StatelessWidget {
         ],
       ],
     );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: 2,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'หน้าหลัก'),
-        BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), label: 'ประวัติ'),
-        BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'ตั้งค่า'),
-      ],
-    );
-  }
+}
 }

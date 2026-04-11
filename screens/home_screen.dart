@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'models/calculation_history.dart';
+import '/models/calculation_history.dart';
 import 'category_screen.dart';
 import 'history_screen.dart';
+import 'setting.dart';
 import 'dart:math';
 
 class HomeDashboardScreen extends StatefulWidget {
@@ -35,18 +36,24 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     'ไม่ควรนำของร้อนเข้าตู้เย็น เพราะจะทำให้คอมเพรสเซอร์ทำงานหนัก',
   ];
 
+  // ในไฟล์ home_screen.dart (หรือ HomeDashboardScreen)
   @override
   Widget build(BuildContext context) {
-    // 1. สร้าง List ของหน้าจอ โดยแยก UI ของหน้า Dashboard ออกมา
+    // ย้าย List ของหน้ามาไว้ใน build เพื่อให้ดึง currentIndex ล่าสุดได้เสมอ
     final List<Widget> _pages = [
-      _buildMainDashboard(), // หน้าที่ 0: Dashboard
-      const HistoryScreen(),   // หน้าที่ 1: History
-      const Center(child: Text('Settings Page')), // หน้าที่ 2: Settings (ชั่วคราว)
+      _buildMainDashboard(), 
+      const HistoryScreen(),
+      // ส่งฟังก์ชัน setState ไปเพื่อให้หน้า Setting สั่งเปลี่ยนหน้ากลับมาที่ Index 0 ได้
+      SettingsScreen(onBackToHome: () {
+        setState(() {
+          _currentIndex = 0; 
+        });
+      }),
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFE082),
-      // 2. ปรับ Body ให้แสดงตาม Index ที่ถูกเลือก
+      // กำหนดสีพื้นหลังพื้นฐานเพื่อไม่ให้เห็นขอบขาวเวลาสลับหน้า
+      backgroundColor: const Color(0xFFF2F2F2), 
       body: _pages[_currentIndex], 
       bottomNavigationBar: _buildBottomNav(),
     );
@@ -247,7 +254,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           onTap: (index) {
             setState(() {
               _currentIndex = index; // เปลี่ยนหน้าเมื่อกดปุ่ม
-            });
+            }); 
           },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'หน้าหลัก'),

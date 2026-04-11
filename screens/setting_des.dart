@@ -6,7 +6,7 @@ class DescriptionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFD147), // สีเหลืองหลัก
+      backgroundColor: const Color(0xFFFFE082), // สีเหลืองหลัก
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
@@ -22,12 +22,11 @@ class DescriptionScreen extends StatelessWidget {
       ),
       body: Container(
         width: double.infinity,
-        margin: const EdgeInsets.only(top: 20),
+        margin: const EdgeInsets.only(top: 20, bottom: 20), // เพิ่ม margin ล่างเล็กน้อยเพื่อให้เห็นความมนชัดขึ้น
         decoration: const BoxDecoration(
           color: Color(0xFFF7F4EB), // สีครีมอ่อน
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(40),
-            topRight: Radius.circular(40),
+          borderRadius: BorderRadius.all( // --- แก้ไขจาก .only เป็น .all ---
+            Radius.circular(40),
           ),
         ),
         child: SingleChildScrollView(
@@ -44,9 +43,7 @@ class DescriptionScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: _buildBottomNav(),
-    );
+      ),    );
   }
 
   // Widget สำหรับการ์ดสูตรการคำนวณ
@@ -139,17 +136,6 @@ class DescriptionScreen extends StatelessWidget {
         Text(content,
             style: const TextStyle(
                 fontSize: 15, color: Colors.black87, height: 1.5)),
-      ],
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: 2,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'หน้าหลัก'),
-        BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), label: 'ประวัติ'),
-        BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'ตั้งค่า'),
       ],
     );
   }

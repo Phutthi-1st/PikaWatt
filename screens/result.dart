@@ -10,8 +10,7 @@ class CalculationResultScreen extends StatefulWidget {
 class _CalculationResultScreenState extends State<CalculationResultScreen> {
   // เริ่มต้นที่ 'เดือน' ตามรูปภาพ
   String _selectedPeriod = 'เดือน';
-  int _currentNavIndex = 0; // สำหรับจัดการการเลือกใน BottomNav
-
+  
   @override
   Widget build(BuildContext context) {
     // 1. ดึงค่า Arguments (brand, model, watt, hours)
@@ -97,7 +96,6 @@ class _CalculationResultScreenState extends State<CalculationResultScreen> {
         ),
       ),
       // Bottom Navigation Bar ที่เพิ่มฟังก์ชันกดได้จริง
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -228,71 +226,6 @@ class _CalculationResultScreenState extends State<CalculationResultScreen> {
             Text('เปรียบเทียบ', 
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.indigo)),
           ],
-        ),
-      ),
-    );
-  }
-
-  // --- Widget: Bottom Nav Bar (ที่เพิ่ม Navigation Logic) ---
-  Widget _buildBottomNav() {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-      ),
-      child: Container(
-        color: const Color(0xFFF7F4EB), 
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
-            boxShadow: [
-              BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 1),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
-            child: BottomNavigationBar(
-              currentIndex: _currentNavIndex,
-              backgroundColor: Colors.white,
-              selectedItemColor: Colors.black,
-              unselectedItemColor: Colors.black54,
-              elevation: 0,
-              type: BottomNavigationBarType.fixed,
-              onTap: (index) {
-                setState(() {
-                  _currentNavIndex = index;
-                });
-                if (index == 0) {
-                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-                } else if (index == 1) {
-                  Navigator.pushNamed(context, '/history');
-                } else if (index == 2) {
-                  Navigator.pushNamed(context, '/settings');
-                }
-              },
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined),
-                  label: 'หน้าหลัก',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.analytics_outlined),
-                  label: 'ประวัติ',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.settings_outlined),
-                  label: 'ตั้งค่า',
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

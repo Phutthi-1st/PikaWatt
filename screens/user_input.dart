@@ -8,19 +8,17 @@ class UsageSettingScreen extends StatefulWidget {
 }
 
 class _UsageSettingScreenState extends State<UsageSettingScreen> {
-  String? _selectedType = 'หอพัก'; 
-  double _usageHours = 13.0; 
-  final List<bool> _selectedDays = List.generate(7, (index) => true); 
+  // --- 1. ปรับค่าเริ่มต้นเป็น 0 หรือ null ทั้งหมด ---
+  String? _selectedType; // ยังไม่เลือกที่พัก
+  double _usageHours = 0.0; // เริ่มต้นที่ 0 ชม.
+  final List<bool> _selectedDays = List.generate(7, (index) => false); // ยังไม่เลือกวันเลย
   final List<String> _dayLabels = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
 
-  // --- เพิ่ม Controller สำหรับค่าไฟกำหนดเอง ---
   final TextEditingController _customRateController = TextEditingController(text: '0.0');
-  int _currentNavIndex = 0;
 
-  // ฟังก์ชันคำนวณเรทที่จะนำไปแสดงผลและใช้งาน
   double get _currentRate {
-    if (_selectedType == 'บ้าน') return 4.42; // เรทบ้านเฉลี่ย
-    if (_selectedType == 'หอพัก') return 7.0;  // เรทหอพัก
+    if (_selectedType == 'บ้าน') return 4.42;
+    if (_selectedType == 'หอพัก') return 7.0;
     return double.tryParse(_customRateController.text) ?? 0.0;
   }
 
@@ -28,9 +26,13 @@ class _UsageSettingScreenState extends State<UsageSettingScreen> {
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
 
-    // ตรวจสอบความพร้อม: เลือกประเภท, ชั่วโมง > 0, และถ้าเลือกกำหนดเองต้องกรอกเลข > 0
+    // --- 2. ปรับเงื่อนไขความพร้อม (isReady) ---
+    // ต้องนับว่ามีการเลือกวันอย่างน้อย 1 วันไหม
+    int activeDays = _selectedDays.where((day) => day).length;
+
     bool isReady = _selectedType != null && 
                    _usageHours > 0 && 
+                   activeDays > 0 && 
                    (_selectedType != 'กำหนดเอง' || _currentRate > 0);
 
     return Scaffold(
@@ -73,19 +75,19 @@ class _UsageSettingScreenState extends State<UsageSettingScreen> {
               _buildDayPicker(), 
               const SizedBox(height: 30),
               
-              // --- ส่วนแสดงเรทค่าไฟและช่องกรอก Custom ---
               _buildRateSection(),
               const SizedBox(height: 35),
               
-              _buildSubmitButton(isReady, args),
+              _buildSubmitButton(isReady, args, activeDays), // ส่ง activeDays เข้าไป
               const SizedBox(height: 20),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
+
+  // --- ส่วนของ Widget ต่างๆ (ใช้โค้ดเดิมของคุณ แต่จะทำงานสัมพันธ์กับค่า 0 อัตโนมัติ) ---
 
   Widget _buildTypeSelector() {
     return Container(
@@ -118,97 +120,32 @@ class _UsageSettingScreenState extends State<UsageSettingScreen> {
           Text(title, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 18)),
         ],
       ),
-      onChanged: (value) => setState(() {
-        _selectedType = value;
-      }),
-    );
-  }
-
-  // --- ส่วนแสดงเรทค่าไฟแบบใหม่ ---
-  Widget _buildRateSection() {
-    return Column(
-      children: [
-        // แสดงช่องกรอกเมื่อเลือก "กำหนดเอง" เท่านั้น
-        if (_selectedType == 'กำหนดเอง')
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20),
-            child: TextField(
-              controller: _customRateController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.orange),
-              decoration: InputDecoration(
-                labelText: 'ระบุค่าไฟต่อหน่วยของคุณ',
-                hintText: '0.00',
-                suffixText: 'บาท / หน่วย',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
-              ),
-              onChanged: (val) => setState(() {}), // อัปเดต UI เมื่อพิมพ์
-            ),
-          ),
-        
-        // แถบโชว์ค่าไฟที่สรุปแล้ว
-Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.notifications_active_outlined, size: 22, color: Colors.black54),
-          const SizedBox(width: 10),
-          const Text(
-            'อัตราค่าไฟที่ใช้คำนวณ:',
-            style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16, color: Colors.black87),
-          ),
-          const SizedBox(width: 12),
-          
-          // --- ส่วนที่แก้ไข: Container คลุมเฉพาะตัวเลข ---
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFE58F), // สีเหลืองตามรูป
-              borderRadius: BorderRadius.circular(12), // ขอบมน
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Text(
-              '${_currentRate.toStringAsFixed(2)} /หน่วย',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold, 
-                fontSize: 16,
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ],
-      ),
-      ],
+      onChanged: (value) => setState(() => _selectedType = value),
     );
   }
 
   Widget _buildHourSlider() {
     return Container(
       padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-      ),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('ชั่วโมงการใช้งานต่อวัน', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text('${_usageHours.toInt()} ชั่วโมง', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text('${_usageHours.toInt()} ชั่วโมง', 
+                   style: TextStyle(
+                     fontWeight: FontWeight.bold, 
+                     fontSize: 18, 
+                     color: _usageHours == 0 ? Colors.grey : Colors.black // ถ้าเป็น 0 ให้เป็นสีเทา
+                   )),
             ],
           ),
           Slider(
             value: _usageHours,
             min: 0, max: 24,
+            divisions: 24, // เพิ่มขีดแบ่งเพื่อให้เลือกง่ายขึ้น
             activeColor: Colors.amber,
             onChanged: (val) => setState(() => _usageHours = val),
           ),
@@ -233,7 +170,11 @@ Row(
                 borderRadius: BorderRadius.circular(10),
               ),
               alignment: Alignment.center,
-              child: Text(_dayLabels[index], style: const TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(_dayLabels[index], 
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _selectedDays[index] ? Colors.black : Colors.black45
+                          )),
             ),
           );
         }),
@@ -241,29 +182,68 @@ Row(
     );
   }
 
-Widget _buildSubmitButton(bool isReady, Map<String, dynamic>? args) {
+  Widget _buildRateSection() {
+    return Column(
+      children: [
+        if (_selectedType == 'กำหนดเอง')
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: TextField(
+              controller: _customRateController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.orange),
+              decoration: InputDecoration(
+                labelText: 'ระบุค่าไฟต่อหน่วยของคุณ',
+                hintText: '0.00',
+                suffixText: 'บาท / หน่วย',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+              ),
+              onChanged: (val) => setState(() {}),
+            ),
+          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.notifications_active_outlined, size: 22, color: Colors.black54),
+            const SizedBox(width: 10),
+            const Text('อัตราค่าไฟที่ใช้คำนวณ:', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: _selectedType == null ? Colors.grey[300] : const Color(0xFFFFE58F),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${_currentRate.toStringAsFixed(2)} /หน่วย',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton(bool isReady, Map<String, dynamic>? args, int activeDays) {
     return InkWell(
       onTap: isReady ? () {
-        // 1. คำนวณจำนวนวันที่เลือกใน 1 สัปดาห์
-        int activeDays = _selectedDays.where((d) => d).length;
-        
-        // 2. เปลี่ยนการส่งค่าให้ตรงกับที่หน้า CompareScreen ต้องการ
-        // เราจะส่งข้อมูลสินค้าปัจจุบันไปในชื่อ 'productA'
         Navigator.pushNamed(context, '/compare', arguments: {
           'productA': {
-            'brand': args?['brand'] ?? 'ไม่ระบุ',
-            'model': args?['model'] ?? 'ไม่ระบุ',
-            'watt': args?['watt'] ?? 0,
+            'brand': args?['productA']?['brand'] ?? args?['brand'] ?? 'ไม่ระบุ',
+            'model': args?['productA']?['model'] ?? args?['model'] ?? 'ไม่ระบุ',
+            'watt': args?['productA']?['watt'] ?? args?['watt'] ?? 0,
             'hours': _usageHours.toInt(),
             'daysPerWeek': activeDays,
             'rate': _currentRate,
           },
-          // ส่ง 'productB' เป็น null ไปก่อนในครั้งแรก เพื่อให้ปุ่ม "เลือกรุ่น B" ปรากฏ
-          'productB': null, 
-          
-          // ส่งค่ากลางอื่นๆ ไปด้วย (ถ้าต้องการใช้ในหน้าเปรียบเทียบ)
+          'productB': null,
           'hours': _usageHours.toInt(),
           'rate': _currentRate,
+          'daysPerWeek': activeDays,
         });
       } : null,
       child: Container(
@@ -272,32 +252,17 @@ Widget _buildSubmitButton(bool isReady, Map<String, dynamic>? args) {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(40),
           gradient: isReady 
-            ? const LinearGradient(colors: [Color(0xFFFFD147), Color(0xFFF7941D)])
+            ? const LinearGradient(colors: [Color(0xFFFFD147), Color(0xFFFFCC33)])
             : LinearGradient(colors: [Colors.grey[400]!, Colors.grey[500]!]),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))
-          ],
+          boxShadow: [if (isReady) BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))],
         ),
-        child: const Center(
+        child: Center(
           child: Text(
             'บันทึกและคำนวณค่า', 
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black)
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isReady ? Colors.black : Colors.black38)
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: _currentNavIndex,
-      selectedItemColor: Colors.amber[800],
-      onTap: (index) => setState(() => _currentNavIndex = index),
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'หน้าหลัก'),
-        BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), label: 'ประวัติ'),
-        BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'ตั้งค่า'),
-      ],
     );
   }
 }
