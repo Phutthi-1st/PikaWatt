@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../theme_provider.dart';
 
 class UsageSettingScreen extends StatefulWidget {
   const UsageSettingScreen({super.key});
@@ -8,10 +10,13 @@ class UsageSettingScreen extends StatefulWidget {
 }
 
 class _UsageSettingScreenState extends State<UsageSettingScreen> {
-  // --- 1. ปรับค่าเริ่มต้นเป็น 0 หรือ null ทั้งหมด ---
-  String? _selectedType; // ยังไม่เลือกที่พัก
-  double _usageHours = 0.0; // เริ่มต้นที่ 0 ชม.
-  final List<bool> _selectedDays = List.generate(7, (index) => false); // ยังไม่เลือกวันเลย
+  // ── Palette หลัก (ยังเก็บไว้สำหรับจุดเด่น) ────────────────
+  static const Color _primary      = Color(0xFFFFC926); 
+  static const Color _primaryDark  = Color(0xFFF59E0B); 
+
+  String? _selectedType;
+  double _usageHours = 0.0;
+  final List<bool> _selectedDays = List.generate(7, (index) => false);
   final List<String> _dayLabels = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
 
   final TextEditingController _customRateController = TextEditingController(text: '0.0');
@@ -24,10 +29,23 @@ class _UsageSettingScreenState extends State<UsageSettingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+    // 🌗 ดึงค่า Theme
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
 
-    // --- 2. ปรับเงื่อนไขความพร้อม (isReady) ---
-    // ต้องนับว่ามีการเลือกวันอย่างน้อย 1 วันไหม
+    // 🎨 ตั้งค่าสี Dynamic
+    final bgColor = isDark ? const Color(0xFF1A1A2E) : const Color(0xFFFFFBF0);
+    final cardColor = isDark ? const Color(0xFF252545) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final textMid = isDark ? Colors.grey[400]! : const Color(0xFF444444);
+    
+    final topGradient = isDark 
+        ? const [Color(0xFF2A2D43), Color(0xFF1A1A2E)] 
+        : const [Color(0xFFFFD95A), Color(0xFFFFC926)];
+
+    // รับข้อมูล
+    final productArgs = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+    final size = MediaQuery.of(context).size;
     int activeDays = _selectedDays.where((day) => day).length;
 
     bool isReady = _selectedType != null && 
@@ -36,50 +54,86 @@ class _UsageSettingScreenState extends State<UsageSettingScreen> {
                    (_selectedType != 'กำหนดเอง' || _currentRate > 0);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6D36A),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'กำหนดการใช้งาน',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 22),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
       body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          color: Color(0xFFF7F4EB),
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(40), topRight: Radius.circular(40)),
+        width: size.width,
+        height: size.height,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: topGradient,
+          ),
         ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
+        child: SafeArea(
+          bottom: false,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'เลือกรูปแบบที่อยู่อาศัย',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+              // ── Header ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.white.withOpacity(isDark ? 0.15 : 0.35),
+                      child: IconButton(
+                        icon: Icon(Icons.arrow_back_ios_new, color: textColor, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Text(
+                      'กำหนดการใช้งาน',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
 
-              _buildTypeSelector(),
-              const SizedBox(height: 25),
-              
-              _buildHourSlider(),
-              const SizedBox(height: 25),
-              
-              _buildDayPicker(), 
-              const SizedBox(height: 30),
-              
-              _buildRateSection(),
-              const SizedBox(height: 35),
-              
-              _buildSubmitButton(isReady, args, activeDays), // ส่ง activeDays เข้าไป
-              const SizedBox(height: 20),
+              // ── Content Area ──
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(40), 
+                      topRight: Radius.circular(40)
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 35),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildProductBanner(productArgs, isDark, textColor, textMid),
+                        const SizedBox(height: 30),
+
+                        _sectionTitle('เลือกรูปแบบที่อยู่อาศัย', textColor),
+                        const SizedBox(height: 15),
+                        _buildTypeSelector(cardColor, textColor, textMid, isDark),
+                        
+                        const SizedBox(height: 30),
+                        _sectionTitle('ชั่วโมงการใช้งานต่อวัน', textColor),
+                        const SizedBox(height: 15),
+                        _buildHourSlider(cardColor),
+                        
+                        const SizedBox(height: 30),
+                        _sectionTitle('จำนวนวันที่ใช้งานต่อสัปดาห์', textColor),
+                        const SizedBox(height: 15),
+                        _buildDayPicker(cardColor, textColor, textMid), 
+                        
+                        const SizedBox(height: 35),
+                        _buildRateSection(isDark, cardColor),
+                        
+                        const SizedBox(height: 40),
+                        _buildSubmitButton(isReady, productArgs, activeDays),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -87,102 +141,156 @@ class _UsageSettingScreenState extends State<UsageSettingScreen> {
     );
   }
 
-  // --- ส่วนของ Widget ต่างๆ (ใช้โค้ดเดิมของคุณ แต่จะทำงานสัมพันธ์กับค่า 0 อัตโนมัติ) ---
+  // ── Helper Widgets ──
 
-  Widget _buildTypeSelector() {
+  Widget _sectionTitle(String title, Color textColor) {
+    return Text(
+      title,
+      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: textColor),
+    );
+  }
+
+  Widget _buildProductBanner(Map<String, dynamic>? product, bool isDark, Color textColor, Color textMid) {
     return Container(
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15)],
+        color: isDark ? _primary.withOpacity(0.05) : _primary.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: _primary.withOpacity(0.3)),
       ),
-      child: Column(
+      child: Row(
         children: [
-          _typeItem(Icons.home_outlined, 'บ้าน'),
-          const Divider(height: 1, indent: 60),
-          _typeItem(Icons.apartment_outlined, 'หอพัก'),
-          const Divider(height: 1, indent: 60),
-          _typeItem(Icons.tune_outlined, 'กำหนดเอง'),
+          const Icon(Icons.bolt_rounded, color: _primaryDark, size: 30),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${product?['brand'] ?? 'ไม่ระบุ'} - ${product?['model'] ?? ''}',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor),
+                ),
+                Text(
+                  'กำลังไฟฟ้า: ${product?['watt'] ?? 0} วัตต์',
+                  style: TextStyle(fontSize: 13, color: textMid, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _typeItem(IconData icon, String title) {
+  Widget _buildTypeSelector(Color cardColor, Color textColor, Color textMid, bool isDark) {
+    final dividerColor = isDark ? Colors.white10 : const Color(0xFFEEEEEE);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.04), 
+            blurRadius: 15, 
+            offset: const Offset(0, 4)
+          )
+        ],
+      ),
+      child: Column(
+        children: [
+          _typeItem(Icons.home_rounded, 'บ้าน', textColor, textMid),
+          Divider(height: 1, indent: 60, color: dividerColor),
+          _typeItem(Icons.apartment_rounded, 'หอพัก', textColor, textMid),
+          Divider(height: 1, indent: 60, color: dividerColor),
+          _typeItem(Icons.tune_rounded, 'กำหนดเอง', textColor, textMid),
+        ],
+      ),
+    );
+  }
+
+  Widget _typeItem(IconData icon, String title, Color textColor, Color textMid) {
     return RadioListTile<String>(
       value: title,
       groupValue: _selectedType,
-      activeColor: Colors.amber,
+      activeColor: _primaryDark,
       title: Row(
         children: [
-          Icon(icon, color: Colors.black87, size: 28),
+          Icon(icon, color: textMid, size: 24),
           const SizedBox(width: 15),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 18)),
+          Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
         ],
       ),
       onChanged: (value) => setState(() => _selectedType = value),
     );
   }
 
-  Widget _buildHourSlider() {
+  Widget _buildHourSlider(Color cardColor) {
     return Container(
-      padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardColor, 
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15)],
+      ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('ชั่วโมงการใช้งานต่อวัน', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text('${_usageHours.toInt()} ชั่วโมง', 
-                   style: TextStyle(
-                     fontWeight: FontWeight.bold, 
-                     fontSize: 18, 
-                     color: _usageHours == 0 ? Colors.grey : Colors.black // ถ้าเป็น 0 ให้เป็นสีเทา
-                   )),
-            ],
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 6,
+              activeTrackColor: _primaryDark,
+              inactiveTrackColor: _primary.withOpacity(0.2),
+              thumbColor: _primaryDark,
+              overlayColor: _primaryDark.withOpacity(0.2),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 24),
+            ),
+            child: Slider(
+              value: _usageHours,
+              min: 0, max: 24,
+              divisions: 24,
+              onChanged: (val) => setState(() => _usageHours = val),
+            ),
           ),
-          Slider(
-            value: _usageHours,
-            min: 0, max: 24,
-            divisions: 24, // เพิ่มขีดแบ่งเพื่อให้เลือกง่ายขึ้น
-            activeColor: Colors.amber,
-            onChanged: (val) => setState(() => _usageHours = val),
+          Text(
+            '${_usageHours.toInt()} ชั่วโมง / วัน', 
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: _primaryDark)
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDayPicker() {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(7, (index) {
-          return GestureDetector(
-            onTap: () => setState(() => _selectedDays[index] = !_selectedDays[index]),
-            child: Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(
-                color: _selectedDays[index] ? Colors.amber : Colors.grey[100],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              alignment: Alignment.center,
-              child: Text(_dayLabels[index], 
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: _selectedDays[index] ? Colors.black : Colors.black45
-                          )),
+  Widget _buildDayPicker(Color cardColor, Color textColor, Color textMid) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(7, (index) {
+        bool isSelected = _selectedDays[index];
+        return GestureDetector(
+          onTap: () => setState(() => _selectedDays[index] = !_selectedDays[index]),
+          child: Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+              color: isSelected ? _primary : cardColor,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: isSelected ? _primaryDark : Colors.black12),
+              boxShadow: isSelected ? [BoxShadow(color: _primary.withOpacity(0.3), blurRadius: 8)] : [],
             ),
-          );
-        }),
-      ),
+            alignment: Alignment.center,
+            child: Text(
+              _dayLabels[index], 
+              style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? const Color(0xFF1A1A2E) : textMid)
+            ),
+          ),
+        );
+      }),
     );
   }
 
-  Widget _buildRateSection() {
+  Widget _buildRateSection(bool isDark, Color cardColor) {
+    final inputBg = isDark ? Colors.white10 : Colors.white;
+    final hintColor = isDark ? Colors.white54 : Colors.black38;
+
     return Column(
       children: [
         if (_selectedType == 'กำหนดเอง')
@@ -191,75 +299,70 @@ class _UsageSettingScreenState extends State<UsageSettingScreen> {
             child: TextField(
               controller: _customRateController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.orange),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
               decoration: InputDecoration(
-                labelText: 'ระบุค่าไฟต่อหน่วยของคุณ',
-                hintText: '0.00',
-                suffixText: 'บาท / หน่วย',
+                labelText: 'ระบุค่าไฟต่อหน่วย',
+                labelStyle: TextStyle(color: hintColor),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: inputBg,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
               ),
-              onChanged: (val) => setState(() {}),
+              onChanged: (_) => setState(() {}),
             ),
           ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.notifications_active_outlined, size: 22, color: Colors.black54),
-            const SizedBox(width: 10),
-            const Text('อัตราค่าไฟที่ใช้คำนวณ:', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
-            const SizedBox(width: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: _selectedType == null ? Colors.grey[300] : const Color(0xFFFFE58F),
-                borderRadius: BorderRadius.circular(12),
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.5), 
+            borderRadius: BorderRadius.circular(20)
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.flash_on_rounded, color: _primaryDark),
+              const SizedBox(width: 8),
+              Text('อัตราค่าไฟ:', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
+              const SizedBox(width: 10),
+              Text(
+                '${_currentRate.toStringAsFixed(2)} บาท/หน่วย', 
+                style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.green, fontSize: 17)
               ),
-              child: Text(
-                '${_currentRate.toStringAsFixed(2)} /หน่วย',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildSubmitButton(bool isReady, Map<String, dynamic>? args, int activeDays) {
+  Widget _buildSubmitButton(bool isReady, Map<String, dynamic>? product, int activeDays) {
     return InkWell(
       onTap: isReady ? () {
-        Navigator.pushNamed(context, '/compare', arguments: {
-          'productA': {
-            'brand': args?['productA']?['brand'] ?? args?['brand'] ?? 'ไม่ระบุ',
-            'model': args?['productA']?['model'] ?? args?['model'] ?? 'ไม่ระบุ',
-            'watt': args?['productA']?['watt'] ?? args?['watt'] ?? 0,
-            'hours': _usageHours.toInt(),
-            'daysPerWeek': activeDays,
-            'rate': _currentRate,
-          },
-          'productB': null,
-          'hours': _usageHours.toInt(),
-          'rate': _currentRate,
+        Navigator.pushNamed(context, '/result', arguments: {
+          ...?product, 
+          'usageHours': _usageHours.toInt(), 
           'daysPerWeek': activeDays,
+          'rate': _currentRate,
+          'homeType': _selectedType,
         });
       } : null,
       child: Container(
         width: double.infinity,
-        height: 80,
+        height: 75,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(40),
+          borderRadius: BorderRadius.circular(37.5),
           gradient: isReady 
-            ? const LinearGradient(colors: [Color(0xFFFFD147), Color(0xFFFFCC33)])
+            ? const LinearGradient(colors: [_primary, _primaryDark])
             : LinearGradient(colors: [Colors.grey[400]!, Colors.grey[500]!]),
-          boxShadow: [if (isReady) BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))],
+          boxShadow: isReady ? [BoxShadow(color: _primaryDark.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6))] : [],
         ),
         child: Center(
           child: Text(
-            'บันทึกและคำนวณค่า', 
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isReady ? Colors.black : Colors.black38)
+            'คำนวณค่าไฟ', 
+            style: TextStyle(
+              fontSize: 22, 
+              fontWeight: FontWeight.w900, 
+              color: isReady ? const Color(0xFF1A1A2E) : Colors.white70
+            )
           ),
         ),
       ),
