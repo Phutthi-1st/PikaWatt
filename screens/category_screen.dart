@@ -65,7 +65,7 @@ class ApplianceCategoryScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 15),
                     Text(
-                      isSelectingB ? 'เลือกหมวดหมู่รุ่น B' : 'หมวดหมู่ไฟฟ้า',
+                      isSelectingB ? 'เลือกหมวดหมู่รุ่น B' : 'หมวดหมู่เครื่องใช้ไฟฟ้า',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
