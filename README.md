@@ -22,13 +22,6 @@
 * 🏢 **Custom Electricity Rate:** อิสระในการปรับตั้งค่าไฟต่อหน่วย (Unit Rate) ตอบโจทย์กลุ่มผู้ใช้งานที่พักอาศัยในหอพักหรืออพาร์ตเมนต์
 * 📊 **Cost Visualization:** สรุปยอดค่าใช้จ่ายที่เข้าใจง่ายในรูปแบบตัวเงิน (บาท) ทั้งแบบรายวัน รายเดือน และรายปี
 
-## 📱 ภาพตัวอย่างหน้าจอ (Screenshots)
-> **Note:** *สามารถนำลิงก์รูปภาพหน้าจอ UI จริงมาใส่แทนที่ลิงก์ด้านล่างนี้ได้เลย*
-
-| หน้าหลัก (Home) | เปรียบเทียบ (Compare) | กราฟจำลอง (Graph) |
-| :---: | :---: | :---: |
-| <img src="https://via.placeholder.com/200x400.png?text=Home+Screen" width="200"/> | <img src="https://via.placeholder.com/200x400.png?text=Compare+Screen" width="200"/> | <img src="https://via.placeholder.com/200x400.png?text=Graph+Screen" width="200"/> |
-
 ## 🛠️ เครื่องมือและเทคโนโลยี (Tech Stack)
 * **Frontend:** Flutter & Dart
 * **Backend & Authentication:** Firebase (Firebase Auth)
@@ -42,7 +35,6 @@
 * [Flutter SDK](https://docs.flutter.dev/get-started/install)
 * [Android Studio](https://developer.android.com/studio) หรือ VS Code พร้อมติดตั้ง Extension ที่เกี่ยวข้อง
 
-**ขั้นตอนการติดตั้ง:**
-1. Clone โปรเจกต์นี้ลงมาที่เครื่อง
-   ```sh
-   git clone [https://github.com/your-username/PikaWatt.git](https://github.com/your-username/PikaWatt.git)
+
+
+
