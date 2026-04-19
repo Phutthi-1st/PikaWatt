@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1086586579041",
+    "project_id": "pikawatt-af722",
+    "storage_bucket": "pikawatt-af722.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1086586579041:android:a87f1b1354b6d9837aa220",
+        "android_client_info": {
+          "package_name": "com.example.project_phase2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBsboVrGeL1MQD2-o9IEoKWRxiRfhpOz_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
